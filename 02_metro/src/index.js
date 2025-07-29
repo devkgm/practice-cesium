@@ -1,9 +1,14 @@
 import * as Cesium from "cesium";
+import "cesium/Build/Cesium/Widgets/widgets.css";
+import metroData from "./metroLineData.json";
+
 window.CESIUM_BASE_URL = "/static/Cesium/";
 
-import "cesium/Build/Cesium/Widgets/widgets.css";
 Cesium.Ion.defaultAccessToken = process.env.ACCESS_TOKEN;
 const VWORLD_KEY = process.env.VWORLD_KEY;
+
+console.log(metroData);
+
 const layers = [
   { layer: "Base", tileType: "png" },
   { layer: "gray", tileType: "png" },
@@ -30,20 +35,31 @@ const viewer = new Cesium.Viewer("cesiumContainer", {
 
 // 서울역 좌표
 const originPoint = { longitude: 126.971134, latitude: 37.554337 };
-const pointEntity = viewer.entities.add({
-  description: `First data point at (${originPoint.longitude}, ${originPoint.latitude})`,
-  position: Cesium.Cartesian3.fromDegrees(
-    originPoint.longitude,
-    originPoint.latitude,
-    0
-  ),
-  point: { pixelSize: 10, color: Cesium.Color.RED },
+
+const metroEntitySet = new Set();
+metroData.DATA.forEach((line) => {
+  line.node.forEach((node) => {
+    node.station.forEach((station) => {
+      if (metroEntitySet.has(station.station_cd)) return;
+      metroEntitySet.add(
+        station.station_cd,
+        viewer.entities.add({
+          description: `${line.line_name}-${station.name}역 point at (${station.lng}, ${station.lat})`,
+          position: Cesium.Cartesian3.fromDegrees(station.lng, station.lat),
+          point: {
+            pixelSize: 10,
+            color: Cesium.Color.fromCssColorString(line.color),
+          },
+        })
+      );
+    });
+  });
 });
 
 viewer.camera.setView({
   destination: Cesium.Cartesian3.fromDegrees(
     originPoint.longitude,
     originPoint.latitude,
-    1000
+    2000
   ),
 });
