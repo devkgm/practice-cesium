@@ -39,19 +39,27 @@ const originPoint = { longitude: 126.971134, latitude: 37.554337 };
 const metroEntitySet = new Set();
 metroData.DATA.forEach((line) => {
   line.node.forEach((node) => {
+    const positions = [];
     node.station.forEach((station) => {
+      const position = Cesium.Cartesian3.fromDegrees(station.lng, station.lat);
+      positions.push(position);
       if (metroEntitySet.has(station.station_cd)) return;
-      metroEntitySet.add(
-        station.station_cd,
-        viewer.entities.add({
-          description: `${line.line_name}-${station.name}역 point at (${station.lng}, ${station.lat})`,
-          position: Cesium.Cartesian3.fromDegrees(station.lng, station.lat),
-          point: {
-            pixelSize: 10,
-            color: Cesium.Color.fromCssColorString(line.color),
-          },
-        })
-      );
+      metroEntitySet.add(station.station_cd);
+      viewer.entities.add({
+        description: `${line.line_name}-${station.name}역 point at (${station.lng}, ${station.lat})`,
+        position: position,
+        point: {
+          pixelSize: 10,
+          color: Cesium.Color.fromCssColorString(line.color),
+        },
+      });
+    });
+    viewer.entities.add({
+      polyline: {
+        positions: positions,
+        width: 5,
+        material: Cesium.Color.fromCssColorString(line.color),
+      },
     });
   });
 });
